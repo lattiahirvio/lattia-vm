@@ -110,21 +110,21 @@ In this last program, we cheat a little bit by just printing the first 3 numbers
 Here is the full instruction set, with descriptions and argument counts for each instruction. The instruction set could probably be even smaller, but these are the instructions I ended up going with.
 
 | Opcode | Name | Description | Arguments |
-| --- | --- | --- | --- | --- |
+|--------|------|-------------|-----------|
 | `0x00` | PUSH | Pushes a number to the stack | 1 |
 | `0x01` | PUSHP | Pushes a number to the stack from the pool. The arguments are the pool indexes. Generally use `0x00` as the first argument. | 2 |
-| `0x02` | POP | Subtracts stack pointer by 1. Technically the top number on the stack is still there, but will be overwritten when you push something new. | - |
+| `0x02` | POP | Subtracts stack pointer by 1. Technically, the top number on the stack is still there, but will be overwritten when you push something new. | - |
 | `0x03` | ADD | Pops the top 2 numbers on the stack, adds them together, and pushes the result to the stack. | - |
 | `0x04` | SUB | Pops the top 2 numbers on the stack, subtracts them, and pushes the result to the stack. | - |
 | `0x05` | MUL | Pops the top 2 numbers on the stack, multiplies them together, and pushes the result to the stack. | - |
 | `0x06` | DIV | Pops the top 2 numbers on the stack, divides them, and pushes the result to the stack. | - |
-| `0x07` | JMP | Unconditional jump. The argument is the index of the code the instruction jumps to.  | 1 |
-| `0x08` | JNE | Conditional negative comparison jump. It compares the top 2 numbers on the stack, and if they are not equal, jump to the address specified in the argument. | 1 |
-| `0x09` | JE | Conditional positive comparison jump. It compares the top 2 numbers on the stack, and if they are equal, jump to the address specified in the argument.| 1 |
-| `0x0a` | JG | Conditional greater than comparison jump. It compares the top 2 numbers on the stack, and if the number on top of the stack is greater than the 2nd top number, jump to the address specified in the argument. | 1 |
+| `0x07` | JMP | Unconditional jump. The argument is the index of the code the instruction jumps to. | 1 |
+| `0x08` | JNE | Conditional negative comparison jump. It compares the top 2 numbers on the stack, and if they are not equal, jumps to the address specified in the argument. | 1 |
+| `0x09` | JE | Conditional positive comparison jump. It compares the top 2 numbers on the stack, and if they are equal, jumps to the address specified in the argument. | 1 |
+| `0x0a` | JG | Conditional greater-than comparison jump. It compares the top 2 numbers on the stack, and if the number on top of the stack is greater than the 2nd top number, jumps to the address specified in the argument. | 1 |
 | `0x0b` | DPRINT | Prints a number from the constant pool. The argument logic works the same as with PUSHP. Make sure the constant you are trying to print is of type 1. | 2 |
 | `0x0c` | SPRINT | Prints a string from the constant pool. The argument logic works the same as with PUSHP. Make sure the constant you are trying to print is of type 0. | 2 |
 | `0x0d` | DPRINTST | Pops the top number from the stack and prints it. | - |
 | `0x0e` | DUP | Duplicates the number that is at the top of the stack. | - |
-| `0x0f` | SWAP | Swaps the number on top of the stack with the number at the offset specified in the argument. For example SWAP, 0x01 swaps the top 2 numbers with each other. | 1 |
-| `0x10` | END | Terminates the program.  | - |
+| `0x0f` | SWAP | Swaps the number on top of the stack with the number at the offset specified in the argument. For example, `SWAP 0x01` swaps the top 2 numbers with each other. | 1 |
+| `0x10` | END | Terminates the program. | - |
