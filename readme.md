@@ -2,7 +2,7 @@
 lattia-vm is a stack-based bytecode virtual machine written in C. The VM supports 16 instructions, which include arithmetic, jumps, stack manipulation, and printing. The VM also has a constant pool, that you can define variables and such in.
 
 ## Running the VM
-To run the VM, you need to clone the repository with the command `(command)`. After git clone, you can compile the `src/main.c` file with the C compiler of your choice. I personally use GCC, so the command is `gcc -o vm ./src/main.c `. The VM was developed on Linux, and has not been tested on Windows.
+To run the VM, you need to clone the repository with the command `git clone https://github.com/lattiahirvio/lattia-vm.git`. After git clone, you can compile the `src/main.c` file with the C compiler of your choice. I personally use GCC, so the command is `gcc -o vm ./src/main.c `. The VM was developed on Linux, and has not been tested on Windows.
 
 ## Inspiration
 The project was inspired by this [stack based bytecode vm tutorial](https://trillium-2.gitbook.io/re-manual/generic/bytecode-vms). The tutorial is incomplete as of writing, but provides a solid base for understanding and writing a virtual machine. I extended the instruction set presented in the tutorial, as it was insufficient for my needs. Along with extending the instruction set, I implemented multiple other features that were missing from the tutorial, such as every instruction other than SPRINT.
