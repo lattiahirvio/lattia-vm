@@ -1,1 +1,0 @@
-/sbin/cc -g -Wl,--dependency-file=CMakeFiles/lattia-vm.dir/link.d "CMakeFiles/lattia-vm.dir/src/main.c.o" "CMakeFiles/lattia-vm.dir/src/tests/test.c.o" "CMakeFiles/lattia-vm.dir/src/utils.c.o" "CMakeFiles/lattia-vm.dir/src/vm.c.o" -o lattia-vm
