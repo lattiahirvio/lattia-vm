@@ -1,5 +1,5 @@
 # lattia-vm
-lattia-vm is a stack-based bytecode virtual machine written in C. The VM supports 16 instructions, which include arithmetic, jumps, stack manipulation, and printing. The VM also has a constant pool, that you can define variables and such in.
+lattia-vm is a stack-based bytecode virtual machine written in C. The VM supports 17 instructions, which include arithmetic, jumps, stack manipulation, and printing. The VM also has a constant pool, that you can define variables and such in.
 
 ## Running the VM
 To run the VM, you need to clone the repository with the command `git clone https://github.com/lattiahirvio/lattia-vm.git`. After git clone, you can compile the code by running the build script `./build.sh`, which will build and run the tests for you. After that, you can run the executable with ./lattia-vm. The VM was developed on Linux, and thus has not been tested on Windows.
