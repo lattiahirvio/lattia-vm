@@ -70,7 +70,8 @@ int main(int argc, char *argv[]) {
         print_help();
         break;
       case 'v':
-        printf("%c", *version);
+        printf("%s\n", version);
+        exit(0);
         break;
       case 'f':
         file_path = optarg;
@@ -88,11 +89,28 @@ int main(int argc, char *argv[]) {
   }
 
   char* code = getBytecode(file_path);
-  printf("Size of bytecode string is %lu\n", strlen(code));
-  uint8_t* code2 = parseBytecode(&vm, code, strlen(code)); 
+  if (!code) {
+    fprintf(stderr, "Error: Failed to load bytecode from file.\n");
+    return EXIT_FAILURE;
+  }
+  uint8_t* code2;
+  if (inline_code) {
+    code2 = parseBytecode(&vm, inline_code, strlen(inline_code));
+    if (debug)
+      printf("Size of code is %d\n", vm.codeSize);
 
-  if (debug)
-    printf("Size of code is %d\n", vm.codeSize);
-  exec(&vm, code2, 30);
+    exec(&vm, code2, vm.codeSize);
+    free(code2);
+    return EXIT_SUCCESS;
+  } else {
+    printf("Size of bytecode string is %lu\n", strlen(code));
+    code2 = parseBytecode(&vm, code, strlen(code)); 
+
+    if (debug)
+      printf("Size of code is %d\n", vm.codeSize);
+    exec(&vm, code2, vm.codeSize);
+  }
+  free(code);
+  free(code2);
   return EXIT_SUCCESS;
 }

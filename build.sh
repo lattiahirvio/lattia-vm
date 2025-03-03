@@ -1,15 +1,25 @@
 #!/bin/sh
 set -e 
 
-BUILD_DIR="./build/"
+BUILD_DIR="./build"
 OUTPUT_BINARY="lattia-vm"
 
-if [ ! -d "$BUILD_DIR" ]; then
-    echo "Creating build directory: $BUILD_DIR"
-    mkdir -p "$BUILD_DIR"
+if [ ! -f "CMakeLists.txt" ]; then
+    echo "CMakeLists.txt not found in the current directory."
+    exit 1
 fi
-cd "$BUILD_DIR"
-echo "Building lattia-vm..."
+
+if [ ! -d "$BUILD_DIR" ]; then
+    mkdir -p "$BUILD_DIR"
+    cd "$BUILD_DIR"
+    cmake ..
+    echo "Makefile generated successfully."
+else
+    cd "$BUILD_DIR"
+fi
+
+echo "Building $OUTPUT_BINARY..."
+make -j$(nproc)  # Uses multiple cores for faster builds
 
 if [ ! -f "$OUTPUT_BINARY" ]; then
     echo "Error: Build failed, $OUTPUT_BINARY not found!"
@@ -17,7 +27,7 @@ if [ ! -f "$OUTPUT_BINARY" ]; then
 fi
 
 echo "Moving $OUTPUT_BINARY to project root..."
-rm -f "../$OUTPUT_BINARY"
-mv "$OUTPUT_BINARY" ..
+mv -f "$OUTPUT_BINARY" ..
 
 echo "Build completed successfully!"
+
