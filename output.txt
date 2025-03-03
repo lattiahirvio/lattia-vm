@@ -1,0 +1,228 @@
+Getting bytecode
+ .data:
+    .int 0 214748364
+
+ .code:
+    PUSH 0x00 // stack: 0
+    DPRINTST // stack: stack empty
+    PUSH 0x01 // stack: 1
+    DUP DPRINTST // stack: 1
+    DUP DPRINTST // stack: 1
+    DUP DUP // stack:  1 1 1
+    ADD // stack: 1 2
+    DUP DPRINTST // stack: 1 2 2nd iteration we JMP here
+    DUP // stack:1 2 2 2nd iteration 2 3 3
+    SWAP 0x02 // stack: 2 2 1 2nd iteration 3 2 3 
+    ADD //stack: 2 3 2nd iteration  3 5
+    DUP // stack: 2 3 3 2nd iteration 3 5 5
+    PUSHP 0x00 0x00 // stack: 2 3 3  2nd iteration 3 5 5 0xFF 
+    JG 0x0C // stack: 2 3 214748364 2nd iteration 3 5 214748364
+    END // Halt the Virtual Machine when the fibonacci number is greater than 214748364
+
+Size of bytecode string is 684
+Parsing bytecode
+Current token is .data:
+
+is in data!
+Current token is 0
+is in a comment!
+Current token is 214748364
+
+
+is in a comment!
+Current token is .code:
+
+is in code!
+Current token is 0x00
+Getting opcode 0x00
+Current token is //
+Current token is stack:
+is in a comment!
+Current token is DPRINTST
+Getting opcode DPRINTST
+Current token is //
+Current token is stack:
+is in a comment!
+Current token is PUSH
+Getting opcode PUSH
+Current token is 0x01
+Getting opcode 0x01
+Current token is //
+Current token is stack:
+is in a comment!
+Current token is DUP
+Getting opcode DUP
+Current token is DPRINTST
+Getting opcode DPRINTST
+Current token is //
+Current token is stack:
+is in a comment!
+Current token is DUP
+Getting opcode DUP
+Current token is DPRINTST
+Getting opcode DPRINTST
+Current token is //
+Current token is stack:
+is in a comment!
+Current token is DUP
+Getting opcode DUP
+Current token is DUP
+Getting opcode DUP
+Current token is //
+Current token is stack:
+is in a comment!
+Current token is ADD
+Getting opcode ADD
+Current token is //
+Current token is stack:
+is in a comment!
+Current token is DUP
+Getting opcode DUP
+Current token is DPRINTST
+Getting opcode DPRINTST
+Current token is //
+Current token is stack:
+is in a comment!
+Current token is DUP
+Getting opcode DUP
+Current token is //
+Current token is stack:1
+is in a comment!
+Current token is SWAP
+Getting opcode SWAP
+Current token is 0x02
+Getting opcode 0x02
+Current token is //
+Current token is stack:
+is in a comment!
+Current token is ADD
+Getting opcode ADD
+Current token is //stack:
+Current token is 2
+is in a comment!
+Current token is DUP
+Getting opcode DUP
+Current token is //
+Current token is stack:
+is in a comment!
+Current token is PUSHP
+Getting opcode PUSHP
+Current token is 0x00
+Getting opcode 0x00
+Current token is 0x00
+Getting opcode 0x00
+Current token is //
+Current token is stack:
+is in a comment!
+Current token is JG
+Getting opcode JG
+Current token is 0x0C
+Getting opcode 0x0C
+Current token is //
+Current token is stack:
+is in a comment!
+Current token is END
+Getting opcode END
+Current token is //
+Current token is Halt
+is in a comment!
+The code to run is:
+0x00 0x0d 0x00 0x01 0x0e 0x0d 0x0e 0x0d 0x0e 0x0e 0x03 0x0e 0x0d 0x0e 0x0f 0x02 0x03 0x0e 0x01 0x00 0x00 0x0a 0x0c 0x10 
+Size of code is 30
+Code is: 0, size is 8
+Opcode is 0
+Size is 30
+pc is 0
+sp is 0
+
+Opcode is 0
+Size is 30
+pc is 2
+sp is 1
+13 
+Opcode is 14
+Size is 30
+pc is 4
+sp is 2
+13 1 
+Opcode is 13
+Size is 30
+pc is 5
+sp is 3
+13 1 1 
+1
+Opcode is 14
+Size is 30
+pc is 6
+sp is 2
+13 1 
+Opcode is 13
+Size is 30
+pc is 7
+sp is 3
+13 1 1 
+1
+Opcode is 14
+Size is 30
+pc is 8
+sp is 2
+13 1 
+Opcode is 14
+Size is 30
+pc is 9
+sp is 3
+13 1 1 
+Opcode is 3
+Size is 30
+pc is 10
+sp is 4
+13 1 1 1 
+Opcode is 14
+Size is 30
+pc is 11
+sp is 3
+13 1 2 
+Opcode is 13
+Size is 30
+pc is 12
+sp is 4
+13 1 2 2 
+2
+Opcode is 14
+Size is 30
+pc is 13
+sp is 3
+13 1 2 
+Opcode is 15
+Size is 30
+pc is 14
+sp is 4
+13 1 2 2 
+b1 is 2, SP is 4, sp-b1 is 1, at SP-1 2
+Swapped stack[3] (1) with stack[1] (2)
+Opcode is 3
+Size is 30
+pc is 16
+sp is 4
+13 2 2 1 
+Opcode is 14
+Size is 30
+pc is 17
+sp is 3
+13 2 3 
+Opcode is 1
+Size is 30
+pc is 18
+sp is 4
+13 2 3 3 
+DPRINT ran[0;31mType mismatch! Please use SPrint for this.[0;37m
+Opcode is 10
+Size is 30
+pc is 21
+sp is 5
+13 2 3 3 0 
+Opcode is 16
+Size is 30
+pc is 23
+sp is 3
+13 2 3 

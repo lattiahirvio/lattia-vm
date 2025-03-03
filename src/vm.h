@@ -4,7 +4,7 @@
  *
  *    This file is part of lattia-vm.
  *
- *    lattia-vmis free software: you can redistribute it and/or modify
+ *    lattia-vm is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
  *    the Free Software Foundation, either version 3 of the License, or
  *    any later version.
@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include <cstdint>
+//#include <cstdint>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -59,16 +59,16 @@ typedef struct {
   };
 } const_t;
 
-
 typedef struct {
   int32_t stack[256];
   int sp;
   const_t pool[128];
+  int codeSize;
 } VM;
 
 // function declarations
-void exec(VM* vm, int8_t* code, size_t size);
+void exec(VM* vm, uint8_t* code, size_t size);
 void initVM(VM* vm);
+void swap(VM* vm, int to_SWAP);
 int push(VM* vm, int value);
 int pop(VM* vm);
-

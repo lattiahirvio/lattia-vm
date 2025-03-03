@@ -1,0 +1,4 @@
+/home/lagoon/coding/c-projects/virtual-machine/build/CMakeFiles/lattia-vm.dir
+/home/lagoon/coding/c-projects/virtual-machine/build/CMakeFiles/test.dir
+/home/lagoon/coding/c-projects/virtual-machine/build/CMakeFiles/edit_cache.dir
+/home/lagoon/coding/c-projects/virtual-machine/build/CMakeFiles/rebuild_cache.dir

@@ -4,7 +4,7 @@
  *
  *    This file is part of lattia-vm.
  *
- *    lattia-vmis free software: you can redistribute it and/or modify
+ *    lattia-vm is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
  *    the Free Software Foundation, either version 3 of the License, or
  *    any later version.
@@ -54,14 +54,32 @@ int pop(VM* vm) {
   return 0;
 }
 
+void swap(VM* vm, int to_SWAP) {
+  if (to_SWAP < 0) {
+    printf("\e[0;31mError: Can't pass a negative number to SWAP\e[0;37m\n");
+    printf("to_SWAP is %d\n", to_SWAP); 
+    return;
+  }
+  if (vm->sp - to_SWAP < 0) {
+    printf("\e[0;31mError: SWAP value exceeds the size of the stack.\e[0;37m\n");
+    printf("to_SWAP is %d\n", to_SWAP); 
+    return;
+  }
+  int top_of_stack = vm->stack[vm->sp];
+  int at_switch = vm->stack[vm->sp - to_SWAP];
+  
+  vm->stack[vm->sp] = at_switch;
+  vm->stack[vm->sp - to_SWAP] = top_of_stack;
+}
+
 // execute instructions
-void exec(VM* vm, int8_t* code, size_t size) {
+void exec(VM* vm, uint8_t* code, size_t size) {
 	int pc = 0; // define our program counter
   if (debug)
     printf("Code is: %hhd, size is %lu\n", *code, sizeof(code));
 
 	// make our loop
-	while (pc < size) {
+	while (pc <= size) {
 		// match opcodes
 		int opcode = code[pc];
     if (debug) {
@@ -104,9 +122,12 @@ void exec(VM* vm, int8_t* code, size_t size) {
 				const_t entry = vm->pool[idx];
 
         if (debug)
-          printf("DPRINT ran");
+          printf("DPRINT ran\n");
         if (entry.type != 1) {
           printf("\e[0;31mType mismatch! Please use SPrint for this.\e[0;37m\n");
+          printf("Location: %d\n", entry.location);
+          printf("Type: %d\n", entry.type);
+          printf("value: %d\n", entry.Ivalue);
         }
 
 				printf("%d\n", entry.Ivalue);
@@ -137,6 +158,9 @@ void exec(VM* vm, int8_t* code, size_t size) {
           printf("DPRINT ran");
         if (entry.type != 1) {
           printf("\e[0;31mType mismatch! Please use SPrint for this.\e[0;37m\n");
+          printf("Location: %d\n", entry.location);
+          printf("Type: %d\n", entry.type);
+          printf("value: %d\n", entry.Ivalue);
         }
         push(vm, entry.Ivalue);
 
@@ -271,7 +295,6 @@ void exec(VM* vm, int8_t* code, size_t size) {
         pc++;
         break;
       }
-
      	// finish executing the program
 			case END:
 				return;

@@ -1,0 +1,20 @@
+.data:
+  .string 0 "Hello World"
+  .int 1 42
+
+.code:
+    PUSH 0x00 // stack: 0
+    DPRINTST // stack: stack empty
+    PUSH 0x01 // stack: 1
+    DUP DPRINTST // stack: 1
+    DUP DPRINTST // stack: 1
+    DUP DUP // stack:  1 1 1
+    ADD // stack: 1 2
+    DUP DPRINTST // stack: 1 2 2nd iteration we JMP here
+    DUP // stack:1 2 2 2nd iteration 2 3 3
+    SWAP 0x02 // stack: 2 2 1 2nd iteration 3 2 3 
+    ADD //stack: 2 3 2nd iteration  3 5
+    DUP // stack: 2 3 3 2nd iteration 3 5 5
+    PUSHP 0x00 0x05 // stack: 2 3 3  2nd iteration 3 5 5 0xFF 
+    JG 0x0C // stack: 2 3 214748364 2nd iteration 3 5 214748364
+    END // Halt the Virtual Machine when the fibonacci number is greater than 214748364

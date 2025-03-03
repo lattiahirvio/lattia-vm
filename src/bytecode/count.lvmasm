@@ -1,0 +1,12 @@
+.code:
+    PUSH 0x01 // PUSH sp = 1 stack[1] = 1
+    DUP // DUP sp = 2 stack[2] = 1
+    DPRINTST // PRINT sp = 1 stack[1] = 1
+    PUSH 0x01 // PUSH sp = 2 stack[2] = 1 we do this because we want to add 1 on every iteration. We JMP here every time a loop begins
+    ADD // ADD sp = 1 stack[1] = 2
+    DUP // DUP sp = 2 stack[2] = 2
+    DPRINTST // PRINT sp = 1 stack[1] = 2
+    DUP // DUP sp = 2 stack[2] = 2
+    PUSH 10 // PUSH sp = 3 stack[3] = 10 we push whatever number we want the loop to end on
+    JNE 0x04 // JNE sp = 1 stack[1] = 2 
+    END // Halt the virtual machine (on last iteration when stack[1] = 10)

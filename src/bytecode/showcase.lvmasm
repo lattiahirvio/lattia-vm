@@ -1,0 +1,52 @@
+.data:
+  .string 0 "Welcome to the Virtual Machine!"
+  .string 1 "Adding numbers!"
+  .string 2 "Subtracting numbers!"
+  .string 3 "Multiplying numbers!"
+  .string 4 "Dividing numbers!"
+  .string 5 "It jumped!"
+
+
+.code:
+    // Print greeting
+    SPRINT 0x00 0x00        // Print "Welcome to the VM!"
+
+    // Push numbers to stack and print them
+    PUSH 0x0A                // Push 10 (decimal)
+    PUSH 0x05                // Push 5 (decimal)
+    DPRINTST                  // Print current stack
+
+    // Add numbers and print result
+    SPRINT 0x00 0x01        // Print "Adding numbers!"
+    ADD                       // Add top two numbers on stack
+    DPRINTST                  // Print current stack (result of ADD)
+
+    // Subtract numbers and print result
+    PUSH 0x08                // Push 8
+    PUSH 0xF                 // Push 8
+    SPRINT 0x00 0x02        // Print "Subtracting numbers!"
+    SUB                       // Subtract top two numbers
+    DPRINTST                  // Print current stack (result of SUB)
+
+    // Multiply numbers and print result
+    PUSH 0x03                // Push 3
+    PUSH 0x04                // Push 4
+    SPRINT 0x00 0x03        // Print "Multiplying numbers!"
+    MUL                       // Multiply top two numbers
+    DPRINTST                  // Print current stack (result of MUL)
+
+    // Divide numbers and print result
+    PUSH 0x02                // Push 2
+    PUSH 0xB                // Push 2
+    SPRINT 0x00 0x04        // Print "Dividing numbers!"
+    DIV                       // Divide top two numbers
+    DPRINTST                  // Print current stack (result of DIV)
+
+    // Conditional jump example
+    PUSH 0x01                // Push 1 (true condition)
+    PUSH 0x01                // Push 1
+    JE 0x32            // Jump to offset 0x11 if equal
+    SPRINT 0x00 0x07        // Print "It jumped!" (skipped if jumped)
+
+    // End the program
+    END                        // Halt the virtual machine
