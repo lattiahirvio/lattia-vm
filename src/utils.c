@@ -30,10 +30,11 @@
 #include "utils.h"
 #include "vm.h"
 
-char *getBytecode(const char *filepath) {
+// note: no null terminator
+char *readFileToStr(const char *filepath) {
   FILE *file;
   if (debug)
-    printf("Getting bytecode\n");
+    printf("Getting assembly code\n");
   char character;
   file = fopen(filepath, "r");
   if (NULL == file) {
@@ -82,7 +83,7 @@ char *getBytecode(const char *filepath) {
   return code;
 }
 
-uint8_t *parseBytecode(VM *vm, char *code, int codeSize) {
+uint8_t *parseStrToBytecode(VM *vm, char *code, int codeSize) {
   int a, b, sizeOfCode = 0;
   char *text;
   bool isInComment = false, isInData = false, isInCode = false;
