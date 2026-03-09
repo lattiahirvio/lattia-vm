@@ -1,4 +1,4 @@
-/* 
+/*
  *
  *    Copyright (C) 2025 lattiahirvio
  *
@@ -30,7 +30,7 @@
 #include "utils.h"
 #include "vm.h"
 
-char* getBytecode(const char *filepath) {
+char *getBytecode(const char *filepath) {
   FILE *file;
   if (debug)
     printf("Getting bytecode\n");
@@ -43,7 +43,7 @@ char* getBytecode(const char *filepath) {
 
   int maxSize = 256;
   int sizeOfList = 0;
-  char* list = malloc(maxSize* sizeof(char));
+  char *list = malloc(maxSize * sizeof(char));
   if (NULL == list) {
     printf("\e[0;31mCould not allocate list.\e[0;37m\n");
     fclose(file);
@@ -53,7 +53,7 @@ char* getBytecode(const char *filepath) {
   while ((character = fgetc(file)) != EOF) {
     list[sizeOfList] = character;
     ++sizeOfList;
-    if (sizeOfList == maxSize-1) {
+    if (sizeOfList == maxSize - 1) {
       maxSize += 256;
       list = realloc(list, maxSize * sizeof(char));
       if (NULL == list) {
@@ -65,7 +65,7 @@ char* getBytecode(const char *filepath) {
   }
   fclose(file);
 
-  char* code = malloc(sizeOfList * sizeof(char));
+  char *code = malloc(sizeOfList * sizeof(char));
 
   for (int i = 0; i < sizeOfList; i++) {
     code[i] = list[i];
@@ -82,12 +82,12 @@ char* getBytecode(const char *filepath) {
   return code;
 }
 
-uint8_t* parseBytecode(VM* vm, char* code, int codeSize) {
+uint8_t *parseBytecode(VM *vm, char *code, int codeSize) {
   int a, b, sizeOfCode = 0;
-  char* text;
+  char *text;
   bool isInComment = false, isInData = false, isInCode = false;
-  //uint8_t bytecode[codeSize];
-  uint8_t* bytecode = malloc(codeSize * sizeof(uint8_t));
+  // uint8_t bytecode[codeSize];
+  uint8_t *bytecode = malloc(codeSize * sizeof(uint8_t));
   if (!bytecode) {
     printf("Memory allocation failed!\n");
     return NULL;
@@ -101,31 +101,29 @@ uint8_t* parseBytecode(VM* vm, char* code, int codeSize) {
       printf("Current token is %s\n", text);
     if (strncasecmp(text, "//", 2) == 0) {
       isInComment = true;
-    }
-    else if (strncasecmp(text, ".data:", 6) == 0) {
+    } else if (strncasecmp(text, ".data:", 6) == 0) {
       if (debug)
         printf("is in data!\n");
       isInData = true;
       text = strtok(NULL, " ");
-      if (!text) continue;
-    }
-    else if (strncasecmp(text, ".code:", 6) == 0) {
+      if (!text)
+        continue;
+    } else if (strncasecmp(text, ".code:", 6) == 0) {
       if (debug)
         printf("is in code!\n");
       isInData = false;
       isInCode = true;
       text = strtok(NULL, " ");
-      if (!text) continue;
-    }
-    else if (isInComment) {
+      if (!text)
+        continue;
+    } else if (isInComment) {
       if (debug)
         printf("is in a comment!\n");
       strtok(NULL, "\n");
       isInComment = false;
       text = strtok(NULL, " ");
       continue;
-    }
-    else if (isInData) {
+    } else if (isInData) {
       if (debug)
         printf("is in a comment!\n");
       if (strncasecmp(text, ".string", 7) == 0) {
@@ -133,12 +131,12 @@ uint8_t* parseBytecode(VM* vm, char* code, int codeSize) {
           printf("Found string! Adding to vm!\n");
         text = strtok(NULL, " ");
         a = parseNumber(text);
-        char* string = strtok(NULL, "\"");
+        char *string = strtok(NULL, "\"");
         vm->pool[a] = (const_t){a, 0, .Svalue = string};
-        text = strtok(NULL," ");
-        if (!text) continue;
-      }
-      else if (strncasecmp(text, ".int", 4) == 0) {
+        text = strtok(NULL, " ");
+        if (!text)
+          continue;
+      } else if (strncasecmp(text, ".int", 4) == 0) {
         if (debug)
           printf("Found Int! Adding to vm!\n");
         text = strtok(NULL, " ");
@@ -152,26 +150,26 @@ uint8_t* parseBytecode(VM* vm, char* code, int codeSize) {
         if (debug)
           printf("%s", text);
         vm->pool[a] = (const_t){a, 1, .Ivalue = b};
-        text = strtok(NULL," ");
-        if (!text) continue;
+        text = strtok(NULL, " ");
+        if (!text)
+          continue;
       }
-    }
-    else if (isInCode) {
+    } else if (isInCode) {
       b = getOpcodeFromChar(text);
       if (debug)
         printf("Getting opcode %s\n", text);
       if (b != -1) { // we check if it is an opcode
         bytecode[sizeOfCode] = b;
-        ++sizeOfCode; //increment a to keep up with bytecode size...
-      } else { // if it is not an opcode, we know it is a byte
+        ++sizeOfCode; // increment a to keep up with bytecode size...
+      } else {        // if it is not an opcode, we know it is a byte
         bytecode[sizeOfCode] = parseNumber(text);
-        ++sizeOfCode; //increment a to keep up with bytecode size...
+        ++sizeOfCode; // increment a to keep up with bytecode size...
       }
     }
     text = strtok(NULL, " ");
   }
 
-  uint8_t* codetoRet = malloc(sizeOfCode * sizeof(uint8_t));
+  uint8_t *codetoRet = malloc(sizeOfCode * sizeof(uint8_t));
   if (codetoRet == NULL) {
     printf("Failed to allocate bytecode!\n");
     return NULL;
@@ -193,65 +191,65 @@ uint8_t* parseBytecode(VM* vm, char* code, int codeSize) {
 }
 
 int parseNumber(const char *str) {
-  if(strncasecmp(str, "0x", 2) == 0) {
-    return (int) strtol(str, NULL, 16);
+  if (strncasecmp(str, "0x", 2) == 0) {
+    return (int)strtol(str, NULL, 16);
   } else {
     return atoi(str);
   }
 }
 
-int getOpcodeFromChar(const char* opcode) {
+int getOpcodeFromChar(const char *opcode) {
   if (strcmp("PUSH", opcode) == 0) {
     return PUSH;
   }
-  if(strcmp("PUSHP", opcode) == 0) {
+  if (strcmp("PUSHP", opcode) == 0) {
     return PUSHP;
   }
-  if(strcmp("POP", opcode) == 0) {
+  if (strcmp("POP", opcode) == 0) {
     return POP;
   }
-  if(strcmp("ADD", opcode) == 0) {
+  if (strcmp("ADD", opcode) == 0) {
     return ADD;
   }
-  if(strcmp("SUB", opcode) == 0) {
+  if (strcmp("SUB", opcode) == 0) {
     return SUB;
   }
-  if(strcmp("MUL", opcode) == 0) {
+  if (strcmp("MUL", opcode) == 0) {
     return MUL;
   }
-  if(strcmp("DIV", opcode) == 0) {
+  if (strcmp("DIV", opcode) == 0) {
     return DIV;
   }
-  if(strcmp("JMP", opcode) == 0) {
+  if (strcmp("JMP", opcode) == 0) {
     return JMP;
   }
-  if(strcmp("JNE", opcode) == 0) {
+  if (strcmp("JNE", opcode) == 0) {
     return JNE;
   }
-  if(strcmp("JE", opcode) == 0) {
+  if (strcmp("JE", opcode) == 0) {
     return JE;
   }
-  if(strcmp("JG", opcode) == 0) {
+  if (strcmp("JG", opcode) == 0) {
     return JG;
   }
-  if(strcmp("DPRINT", opcode) == 0) {
+  if (strcmp("DPRINT", opcode) == 0) {
     return DPRINT;
   }
-  if(strcmp("SPRINT", opcode) == 0) {
+  if (strcmp("SPRINT", opcode) == 0) {
     return SPRINT;
   }
-  if(strcmp("DPRINTST", opcode) == 0) {
+  if (strcmp("DPRINTST", opcode) == 0) {
     return DPRINTST;
   }
-  if(strcmp("DUP", opcode) == 0) {
+  if (strcmp("DUP", opcode) == 0) {
     return DUP;
   }
-  if(strcmp("SWAP", opcode) == 0) {
+  if (strcmp("SWAP", opcode) == 0) {
     return SWAP;
   }
-  if(strcmp("END", opcode) == 0) {
+  if (strcmp("END", opcode) == 0) {
     return END;
   }
-  //printf("String is not a valid opcode identifier.\n");
+  // printf("String is not a valid opcode identifier.\n");
   return -1;
 }

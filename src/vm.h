@@ -1,4 +1,4 @@
-/* 
+/*
  *
  *    Copyright (C) 2025 lattiahirvio
  *
@@ -21,11 +21,11 @@
 
 #pragma once
 
-//#include <cstdint>
+// #include <cstdint>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
 
 // Define a lot of bytes for the bytecode
 #define PUSH 0x00
@@ -51,10 +51,10 @@ extern bool debug;
 
 // define any structs
 typedef struct {
-	int location; // the index in the pool
+  int location; // the index in the pool
   int type;
   union {
-    char* Svalue; 
+    char *Svalue;
     int Ivalue;
   };
 } const_t;
@@ -67,8 +67,8 @@ typedef struct {
 } VM;
 
 // function declarations
-void exec(VM* vm, uint8_t* code, size_t size);
-void initVM(VM* vm);
-void swap(VM* vm, int to_SWAP);
-int push(VM* vm, int value);
-int pop(VM* vm);
+void exec(VM *vm, uint8_t *code, size_t size);
+void initVM(VM *vm);
+void swap(VM *vm, int to_SWAP);
+int push(VM *vm, int value);
+int pop(VM *vm);
