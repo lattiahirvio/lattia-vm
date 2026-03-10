@@ -56,6 +56,8 @@ void assert(bool condition, const char *format, ...) {
 }
 
 // reads a whole file to a char*
+//
+// (ChatGPT)
 char *readFileToStr(const char *filepath) {
   FILE *f = fopen(filepath, "rb");
   if (!f)
@@ -142,30 +144,135 @@ int32_t parseDec(char **code) {
 
 // parses either a dec number or hex number if it starts with 0x
 int32_t parseNumber(char **code) {
+  int sign = 1;
+  if (**code == '-') {
+    (*code)++;
+    sign = -1;
+  }
   if (strncmp(*code, "0x", 2) == 0) {
     *code += 2;
-    return parseHex(code);
+    return parseHex(code) * sign;
   } else {
-    return parseDec(code);
+    return parseDec(code) * sign;
   }
 }
 
-void parseInstruction(VM *vm, char **code) {}
+char *parseString(char **code) {
+  if (debug)
+    printf("Parsing String!\n");
+  assert(**code == '"', "Error: Expected string literal somewhere.");
+  (*code)++;
+  const size_t MAX_SIZE = 1024;
+  char *limit = *code + MAX_SIZE;
+  char *str = malloc(MAX_SIZE);
+  char *next = str;
+  while (**code && **code != '"' && *code < limit) {
+    if (**code != '\\') {
+      *next = **code;
+      if (debug)
+        printf("CHAR: %c [%d]\n", *next, *next);
+      next++;
+      (*code)++;
+      continue;
+    }
+    (*code)++;
+    switch (**code) {
+    case '\\':
+      *next = '\\';
+      break;
+    case 'r':
+      *next = '\r';
+      break;
+    case 'n':
+      *next = '\n';
+      break;
+    case 't':
+      *next = '\t';
+      break;
+    case '0':
+      *next = '\0';
+      break;
+    default:
+      printf("Warning: Invalid escape character found somewhere: %c", **code);
+    }
+    if (debug)
+      printf("CHAR: [%d]\n", *next);
+    next++;
+    (*code)++;
+  }
+  *next = '\0';
+  next++;
+  str = realloc(str, next - str);
+  assert(**code == '"', "Error: Unterminated string literal.");
+  (*code)++;
+  return str;
+}
+
+void parseData(VM *vm, char **code) {
+  if (strncmp(*code, ".data:", 6) != 0) {
+    if (debug)
+      printf("No .data section found.");
+    return;
+  }
+  if (debug)
+    printf("Found .data section!");
+
+  while (true) {
+    parseWhitespace(code);
+    if (strncmp(*code, ".int", 4) == 0) {
+      if (debug)
+        printf("Found Int! Adding to vm!\n");
+      *code += 4;
+      parseWhitespace(code);
+      int index = parseNumber(code);
+      parseWhitespace(code);
+      int32_t value = parseNumber(code);
+      vm->pool[index] = (const_t){index, 1, .Ivalue = value};
+      if (debug)
+        printf("Int was %d\n", value);
+    } else if (strncmp(*code, ".string", 7) == 0) {
+      if (debug)
+        printf("Found String! Adding to vm!\n");
+      *code += 7;
+      parseWhitespace(code);
+      int index = parseNumber(code);
+      parseWhitespace(code);
+      char *value = parseString(code);
+      vm->pool[index] = (const_t){index, 0, .Svalue = value};
+      if (debug)
+        printf("String was %s\n", value);
+    } else {
+      if (debug)
+        printf("End of .data section...");
+      return;
+    }
+  }
+}
+
+void testString() {
+  char *code = "\"Hello, world!\\r\\n\\t\\0 \"";
+  char *s = parseString(&code);
+  printf("STRING: %s", s);
+}
 
 // what do you think this function does
 void test() {
-  char buf[] = "//test  \n\n// this is a comment\n  123 0xdE4dbe3f hello world";
-  char *code = buf;
+  testString();
+  return;
+  // char buf[] = "//test  \n\n// this is a comment\n  123 0xdE4dbe3f hello
+  // world"; char *code = buf;
+  char *code = readFileToStr("bytecode/fibonacci.lvmasm");
   parseWhitespace(&code);
-  int a = parseNumber(&code);
-  parseWhitespace(&code);
-  int b = parseNumber(&code);
-  parseWhitespace(&code);
-  printf("%d, 0x%x, '%s'", a, b, code);
+  printf("%s", code);
+  // int a = parseNumber(&code);
+  // parseWhitespace(&code);
+  // int b = parseNumber(&code);
+  // parseWhitespace(&code);
+  // printf("%d, 0x%x, '%s'", a, b, code);
 }
 
 uint8_t *parseStrToBytecode(VM *vm, char *code, int codeSize) {
-  error("TODO: Parse and compile LVASM to Bytecode");
+  error("TODO: Parse and compile LVMASM to Bytecode");
   return NULL;
 }
 
