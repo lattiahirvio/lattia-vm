@@ -172,6 +172,7 @@ int32_t parseNumber(const char **code) {
   }
 }
 
+// parse a C-like string, including quotes
 char *parseString(const char **code) {
   if (debug)
     printf("Parsing String!\n");
@@ -228,6 +229,7 @@ char *parseString(const char **code) {
   return str;
 }
 
+// parses the ".data:" section until a non-data-related token is found
 void parseData(VM *vm, const char **code) {
   if (strncmp(*code, ".data:", 6) != 0) {
     if (debug)
@@ -270,6 +272,7 @@ void parseData(VM *vm, const char **code) {
   }
 }
 
+// parses a single operation under the ".code:" section
 bool parseOperation(uint8_t **bytecodeCursor, const char **code) {
   // identify opcode
   int opcode = -1;
@@ -304,6 +307,7 @@ bool parseOperation(uint8_t **bytecodeCursor, const char **code) {
   return true;
 }
 
+// parses the ".code:" section until either EOF or a syntax error
 void parseCode(uint8_t **bytecodeCursor, const char **code) {
   if (strncmp(*code, ".code:", 6) != 0) {
     if (debug)
@@ -321,12 +325,17 @@ void parseCode(uint8_t **bytecodeCursor, const char **code) {
 
 uint8_t *parseStrToBytecode(VM *vm, const char *code) {
   uint8_t *bytecode = malloc(strlen(code));
+
   parseWhitespace(&code);
   parseData(vm, &code);
   parseWhitespace(&code);
   uint8_t *cursor = bytecode;
   parseCode(&cursor, &code);
+  parseWhitespace(&code);
+
+  assert(*code == '\0', "Error: Syntax error somewhere in '.code' section.");
   vm->codeSize = cursor - bytecode;
+
   if (debug) {
     printf("PRINTING BYTECODE:\n    ");
     for (int i = 0; i < 16; i++) {
@@ -340,10 +349,11 @@ uint8_t *parseStrToBytecode(VM *vm, const char *code) {
     }
     printf("\n");
   }
+
   return bytecode;
 }
 
-// === TESTS ===
+// === [TESTS] (must be manually called) ===
 
 void testString() {
   const char *code = "\"Hello, world!\\r\\n\\t\\0 \"";

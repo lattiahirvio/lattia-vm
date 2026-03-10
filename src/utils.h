@@ -26,6 +26,14 @@
 #include <stdlib.h>
 #include <strings.h>
 
+// reads a file to a char*
 char *readFileToStr(const char *filepath);
+
+// parses a string as LattiaVM Assembly, then:
+//
+// - loads the .data section into vm->pool
+//
+// - sets vm->codeSize equal to the length of the bytecode
+//
+// returns a pointer to the bytecode
 uint8_t *parseStrToBytecode(VM *vm, const char *code);
-int getOpcodeFromChar(const char *opcode);
