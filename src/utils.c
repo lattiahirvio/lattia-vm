@@ -19,6 +19,8 @@
  *
  */
 
+#include <ctype.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -30,173 +32,141 @@
 #include "utils.h"
 #include "vm.h"
 
-// note: no null terminator
+// called like printf - prints to stderr then immediately exits the program
+void error(const char *format, ...) {
+  // i hate varargs
+  va_list args;
+  va_start(args, format);
+  fprintf(stderr, format, args);
+  va_end(args);
+
+  exit(EXIT_FAILURE);
+}
+
+// if (!condition) error(...)
+void assert(bool condition, const char *format, ...) {
+  if (condition)
+    return;
+
+  // i hate varargs
+  va_list args;
+  va_start(args, format);
+  error(format, args);
+  va_end(args);
+}
+
+// reads a whole file to a char*
 char *readFileToStr(const char *filepath) {
-  FILE *file;
-  if (debug)
-    printf("Getting assembly code\n");
-  char character;
-  file = fopen(filepath, "r");
-  if (NULL == file) {
-    printf("\e[0;31mCould not open file.\e[0;37m\n");
+  FILE *f = fopen(filepath, "rb");
+  if (!f)
+    return NULL;
+
+  if (fseek(f, 0, SEEK_END) != 0) {
+    fclose(f);
     return NULL;
   }
 
-  int maxSize = 256;
-  int sizeOfList = 0;
-  char *list = malloc(maxSize * sizeof(char));
-  if (NULL == list) {
-    printf("\e[0;31mCould not allocate list.\e[0;37m\n");
-    fclose(file);
+  long size = ftell(f);
+  if (size < 0) {
+    fclose(f);
     return NULL;
   }
 
-  while ((character = fgetc(file)) != EOF) {
-    list[sizeOfList] = character;
-    ++sizeOfList;
-    if (sizeOfList == maxSize - 1) {
-      maxSize += 256;
-      list = realloc(list, maxSize * sizeof(char));
-      if (NULL == list) {
-        printf("\e[0;31mCould not reallocate list.\e[0;37m\n");
-        free(list);
-        return NULL;
+  rewind(f);
+
+  char *buf = malloc(size + 1);
+  if (!buf) {
+    fclose(f);
+    return NULL;
+  }
+
+  size_t read = fread(buf, 1, size, f);
+  fclose(f);
+
+  if (read != (size_t)size) {
+    free(buf);
+    return NULL;
+  }
+
+  buf[size] = '\0';
+  return buf;
+}
+
+// convenience function
+bool wsat(char **code) { return isspace((unsigned char)**code); }
+
+// skips whitespace and comments
+void parseWhitespace(char **code) {
+  while (true) {
+    if (wsat(code)) {
+      *code += 1;
+    } else if (strncmp(*code, "//", 2) == 0) {
+      while (**code && (*code)[0] != '\n') {
+        *code += 1;
       }
+    } else {
+      break;
     }
   }
-  fclose(file);
+}
 
-  char *code = malloc(sizeOfList * sizeof(char));
-
-  for (int i = 0; i < sizeOfList; i++) {
-    code[i] = list[i];
-  }
-  free(list);
-
-  if (debug) {
-    for (int i = 0; i < sizeOfList; i++) {
-      printf("%c", code[i]); // Use array indexing
+// parses a hex number until whitespace (assuming 0x is already skipped)
+int32_t parseHex(char **code) {
+  int out = 0;
+  while (!wsat(code)) {
+    char c = **code;
+    out *= 16;
+    if (c >= '0' && c <= '9') {
+      out += c - '0';
+    } else {
+      c = toupper(c);
+      assert(c >= 'A' && c <= 'F', "Error: Invalid hex literal somewhere.");
+      out += c - 'A' + 10;
     }
-    printf("\n");
+    *code += 1;
   }
+  return out;
+}
 
-  return code;
+// parses a decimal number until whitespace
+int32_t parseDec(char **code) {
+  int out = 0;
+  while (!wsat(code)) {
+    char c = **code;
+    assert(c >= '0' && c <= '9', "Error: Invalid decimal literal somewhere.");
+    out = out * 10 + c - '0';
+    *code += 1;
+  }
+  return out;
+}
+
+// parses either a dec number or hex number if it starts with 0x
+int32_t parseNumber(char **code) {
+  if (strncmp(*code, "0x", 2) == 0) {
+    *code += 2;
+    return parseHex(code);
+  } else {
+    return parseDec(code);
+  }
+}
+
+void parseInstruction(VM *vm, char **code) {}
+
+// what do you think this function does
+void test() {
+  char buf[] = "//test  \n\n// this is a comment\n  123 0xdE4dbe3f hello world";
+  char *code = buf;
+  parseWhitespace(&code);
+  int a = parseNumber(&code);
+  parseWhitespace(&code);
+  int b = parseNumber(&code);
+  parseWhitespace(&code);
+  printf("%d, 0x%x, '%s'", a, b, code);
 }
 
 uint8_t *parseStrToBytecode(VM *vm, char *code, int codeSize) {
-  int a, b, sizeOfCode = 0;
-  char *text;
-  bool isInComment = false, isInData = false, isInCode = false;
-  // uint8_t bytecode[codeSize];
-  uint8_t *bytecode = malloc(codeSize * sizeof(uint8_t));
-  if (!bytecode) {
-    printf("Memory allocation failed!\n");
-    return NULL;
-  }
-
-  if (debug)
-    printf("Parsing bytecode\n");
-  text = strtok(code, " ");
-  while (text != NULL) {
-    if (debug)
-      printf("Current token is %s\n", text);
-    if (strncasecmp(text, "//", 2) == 0) {
-      isInComment = true;
-    } else if (strncasecmp(text, ".data:", 6) == 0) {
-      if (debug)
-        printf("is in data!\n");
-      isInData = true;
-      text = strtok(NULL, " ");
-      if (!text)
-        continue;
-    } else if (strncasecmp(text, ".code:", 6) == 0) {
-      if (debug)
-        printf("is in code!\n");
-      isInData = false;
-      isInCode = true;
-      text = strtok(NULL, " ");
-      if (!text)
-        continue;
-    } else if (isInComment) {
-      if (debug)
-        printf("is in a comment!\n");
-      strtok(NULL, "\n");
-      isInComment = false;
-      text = strtok(NULL, " ");
-      continue;
-    } else if (isInData) {
-      if (debug)
-        printf("is in a comment!\n");
-      if (strncasecmp(text, ".string", 7) == 0) {
-        if (debug)
-          printf("Found string! Adding to vm!\n");
-        text = strtok(NULL, " ");
-        a = parseNumber(text);
-        char *string = strtok(NULL, "\"");
-        vm->pool[a] = (const_t){a, 0, .Svalue = string};
-        text = strtok(NULL, " ");
-        if (!text)
-          continue;
-      } else if (strncasecmp(text, ".int", 4) == 0) {
-        if (debug)
-          printf("Found Int! Adding to vm!\n");
-        text = strtok(NULL, " ");
-        if (debug)
-          printf("%s", text);
-        a = parseNumber(text);
-        text = strtok(NULL, " ");
-        if (debug)
-          printf("%s", text);
-        b = parseNumber(text);
-        if (debug)
-          printf("%s", text);
-        vm->pool[a] = (const_t){a, 1, .Ivalue = b};
-        text = strtok(NULL, " ");
-        if (!text)
-          continue;
-      }
-    } else if (isInCode) {
-      b = getOpcodeFromChar(text);
-      if (debug)
-        printf("Getting opcode %s\n", text);
-      if (b != -1) { // we check if it is an opcode
-        bytecode[sizeOfCode] = b;
-        ++sizeOfCode; // increment a to keep up with bytecode size...
-      } else {        // if it is not an opcode, we know it is a byte
-        bytecode[sizeOfCode] = parseNumber(text);
-        ++sizeOfCode; // increment a to keep up with bytecode size...
-      }
-    }
-    text = strtok(NULL, " ");
-  }
-
-  uint8_t *codetoRet = malloc(sizeOfCode * sizeof(uint8_t));
-  if (codetoRet == NULL) {
-    printf("Failed to allocate bytecode!\n");
-    return NULL;
-  }
-
-  memcpy(codetoRet, bytecode, sizeOfCode);
-  free(bytecode);
-  vm->codeSize = 30;
-
-  if (debug) {
-    printf("The code to run is:\n"); // Use array indexing
-    for (int i = 0; i < sizeOfCode; i++) {
-      printf("0x%02x ", codetoRet[i]); // Use array indexing
-    }
-    printf("\n");
-  }
-
-  return codetoRet;
-}
-
-int parseNumber(const char *str) {
-  if (strncasecmp(str, "0x", 2) == 0) {
-    return (int)strtol(str, NULL, 16);
-  } else {
-    return atoi(str);
-  }
+  error("TODO: Parse and compile LVASM to Bytecode");
+  return NULL;
 }
 
 int getOpcodeFromChar(const char *opcode) {

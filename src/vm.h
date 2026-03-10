@@ -66,6 +66,8 @@ typedef struct {
   int codeSize;
 } VM;
 
+void test();
+
 // function declarations
 void exec(VM *vm, uint8_t *code, size_t size);
 void initVM(VM *vm);

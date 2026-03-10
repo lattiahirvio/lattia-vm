@@ -26,7 +26,6 @@
 #include <stdlib.h>
 #include <strings.h>
 
-int parseNumber(const char *str);
 char *readFileToStr(const char *filepath);
 uint8_t *parseStrToBytecode(VM *vm, char *code, int codeSize);
 int getOpcodeFromChar(const char *opcode);

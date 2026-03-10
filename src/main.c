@@ -55,6 +55,9 @@ void print_help() {
 }
 
 int main(int argc, char *argv[]) {
+  test();
+  return 0;
+
   // define our vm
   VM vm;
   // initialize vm
