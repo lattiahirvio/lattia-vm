@@ -192,8 +192,13 @@ char *parseString(char **code) {
     case '0':
       *next = '\0';
       break;
+    case '"':
+      *next = '"';
+      break;
     default:
-      printf("Warning: Invalid escape character found somewhere: %c", **code);
+      if (debug)
+        printf("Warning: Invalid escape character found somewhere: %c", **code);
+      *next = **code;
     }
     if (debug)
       printf("CHAR: [%d]\n", *next);
@@ -211,11 +216,12 @@ char *parseString(char **code) {
 void parseData(VM *vm, char **code) {
   if (strncmp(*code, ".data:", 6) != 0) {
     if (debug)
-      printf("No .data section found.");
+      printf("No .data section found.\n");
     return;
   }
+  *code += 6;
   if (debug)
-    printf("Found .data section!");
+    printf("Found .data section!\n");
 
   while (true) {
     parseWhitespace(code);
@@ -224,26 +230,26 @@ void parseData(VM *vm, char **code) {
         printf("Found Int! Adding to vm!\n");
       *code += 4;
       parseWhitespace(code);
-      int index = parseNumber(code);
+      int location = parseNumber(code);
       parseWhitespace(code);
       int32_t value = parseNumber(code);
-      vm->pool[index] = (const_t){index, 1, .Ivalue = value};
+      vm->pool[location] = (const_t){location, 1, .Ivalue = value};
       if (debug)
-        printf("Int was %d\n", value);
+        printf("Int at %d was %d\n", location, value);
     } else if (strncmp(*code, ".string", 7) == 0) {
       if (debug)
         printf("Found String! Adding to vm!\n");
       *code += 7;
       parseWhitespace(code);
-      int index = parseNumber(code);
+      int location = parseNumber(code);
       parseWhitespace(code);
       char *value = parseString(code);
-      vm->pool[index] = (const_t){index, 0, .Svalue = value};
+      vm->pool[location] = (const_t){location, 0, .Svalue = value};
       if (debug)
-        printf("String was %s\n", value);
+        printf("String at %d was \"%s\"\n", location, value);
     } else {
       if (debug)
-        printf("End of .data section...");
+        printf("End of .data section...\n");
       return;
     }
   }
@@ -257,18 +263,12 @@ void testString() {
 
 // what do you think this function does
 void test() {
-  testString();
-  return;
-  // char buf[] = "//test  \n\n// this is a comment\n  123 0xdE4dbe3f hello
-  // world"; char *code = buf;
-  char *code = readFileToStr("bytecode/fibonacci.lvmasm");
+  VM vm;
+  initVM(&vm);
+
+  char *code = readFileToStr("bytecode/showcase.lvmasm");
   parseWhitespace(&code);
-  printf("%s", code);
-  // int a = parseNumber(&code);
-  // parseWhitespace(&code);
-  // int b = parseNumber(&code);
-  // parseWhitespace(&code);
-  // printf("%d, 0x%x, '%s'", a, b, code);
+  parseData(&vm, &code);
 }
 
 uint8_t *parseStrToBytecode(VM *vm, char *code, int codeSize) {

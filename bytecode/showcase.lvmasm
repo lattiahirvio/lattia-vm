@@ -1,5 +1,5 @@
 .data:
-  .string 0 "Welcome to the Virtual Machine!"
+  .string 0 "Welcome to the \"Virtual Machine\"!"
   .string 1 "Adding numbers!"
   .string 2 "Subtracting numbers!"
   .string 3 "Multiplying numbers!"
