@@ -1,4 +1,4 @@
-/* 
+/*
  *
  *    Copyright (C) 2025 lattiahirvio
  *
@@ -19,39 +19,39 @@
  *
  */
 
+#include "utils.h"
+#include "vm.h"
+#include <argp.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <argp.h>
-#include "vm.h"
-#include "utils.h"
 
 bool debug = false;
 const char *version = "lattia-vm 1.0";
 static char doc[] = "A Simple stack based bytecode virtual machine.";
 static struct option long_options[] = {
-    {"help",    no_argument,       0, 'h'},
-    {"version", no_argument,       0, 'v'},
-    {"file",    required_argument, 0, 'f'},
-    {"debug",   no_argument,       0, 'd'},
-    {"code",    required_argument, 0, 'c'},
-    {0, 0, 0, 0} 
+    {"help", no_argument, 0, 'h'},       //
+    {"version", no_argument, 0, 'v'},    //
+    {"file", required_argument, 0, 'f'}, //
+    {"debug", no_argument, 0, 'd'},      //
+    {"code", required_argument, 0, 'c'}, //
+    {0, 0, 0, 0},                        //
 };
 
 struct arguments {
-    enum { CHARACTER_MODE, WORD_MODE, LINE_MODE } mode;
-    bool isCaseInsensitive;
+  enum { CHARACTER_MODE, WORD_MODE, LINE_MODE } mode;
+  bool isCaseInsensitive;
 };
 
 void print_help() {
-    printf("Usage: vm [options]\n");
-    printf("  -h, --help       Show this help message\n");
-    printf("  -v, --version    Show version info\n");
-    printf("  -f, --file FILE  Load a bytecode file\n");
-    printf("  -d, --debug      Enable debug mode\n");
-    printf("  -c, --code CODE  Execute inline bytecode\n");
-    exit(0);
+  printf("Usage: vm [options]\n");
+  printf("  -h, --help       Show this help message\n");
+  printf("  -v, --version    Show version info\n");
+  printf("  -f, --file FILE  Load a bytecode file\n");
+  printf("  -d, --debug      Enable debug mode\n");
+  printf("  -c, --code CODE  Execute inline bytecode\n");
+  exit(0);
 }
 
 int main(int argc, char *argv[]) {
@@ -60,27 +60,27 @@ int main(int argc, char *argv[]) {
   // initialize vm
   initVM(&vm);
   int opt;
-  char* file_path = NULL;
-  char* inline_code = NULL;
+  char *file_path = NULL;
+  char *lvasm = NULL;
 
   // get the cmdline flags
   while ((opt = getopt_long(argc, argv, "hvf:dc:", long_options, NULL)) != -1) {
     switch (opt) {
-      case 'h':
-        print_help();
-        break;
-      case 'v':
-        printf("%s\n", version);
-        exit(0);
-        break;
-      case 'f':
-        file_path = optarg;
-        break;
-     case 'd':
-        debug = true;
-        break;
-     case 'c':
-      inline_code = optarg;
+    case 'h':
+      print_help();
+      break;
+    case 'v':
+      printf("%s\n", version);
+      exit(0);
+      break;
+    case 'f':
+      file_path = optarg;
+      break;
+    case 'd':
+      debug = true;
+      break;
+    case 'c':
+      lvasm = optarg;
       break;
     default:
       fprintf(stderr, "Unknown option. Use --help for usage.\n");
@@ -88,29 +88,29 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  char* code = getBytecode(file_path);
-  if (!code) {
-    fprintf(stderr, "Error: Failed to load bytecode from file.\n");
+  if (file_path) {
+    lvasm = readFileToStr(file_path);
+    if (!lvasm) {
+      fprintf(stderr, "Error: Failed to load bytecode from file.\n");
+      return EXIT_FAILURE;
+    }
+  }
+
+  if (!lvasm) {
+    fprintf(stderr, "Error: Please specify code with -f or -c.\n");
     return EXIT_FAILURE;
   }
-  uint8_t* code2;
-  if (inline_code) {
-    code2 = parseBytecode(&vm, inline_code, strlen(inline_code));
+
+  uint8_t *bytecode;
+  if (lvasm) {
+    bytecode = parseStrToBytecode(&vm, lvasm);
     if (debug)
       printf("Size of code is %d\n", vm.codeSize);
 
-    exec(&vm, code2, vm.codeSize);
-    free(code2);
+    exec(&vm, bytecode, vm.codeSize);
+    free(bytecode);
     return EXIT_SUCCESS;
-  } else {
-    printf("Size of bytecode string is %lu\n", strlen(code));
-    code2 = parseBytecode(&vm, code, strlen(code)); 
-
-    if (debug)
-      printf("Size of code is %d\n", vm.codeSize);
-    exec(&vm, code2, vm.codeSize);
   }
-  free(code);
-  free(code2);
+  free(lvasm);
   return EXIT_SUCCESS;
 }

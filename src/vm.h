@@ -1,4 +1,4 @@
-/* 
+/*
  *
  *    Copyright (C) 2025 lattiahirvio
  *
@@ -21,11 +21,11 @@
 
 #pragma once
 
-//#include <cstdint>
+// #include <cstdint>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
 
 // Define a lot of bytes for the bytecode
 #define PUSH 0x00
@@ -45,16 +45,19 @@
 #define DUP 0x0E
 #define SWAP 0x0F
 #define END 0x10
+#define NUM_OPCODES 0x11
 
 // define global variables
 extern bool debug;
+extern const char *OPCODES[NUM_OPCODES];
+extern const uint8_t OPCODE_ARGS[NUM_OPCODES];
 
 // define any structs
 typedef struct {
-	int location; // the index in the pool
+  int location; // the index in the pool
   int type;
   union {
-    char* Svalue; 
+    char *Svalue;
     int Ivalue;
   };
 } const_t;
@@ -66,9 +69,11 @@ typedef struct {
   int codeSize;
 } VM;
 
+void test();
+
 // function declarations
-void exec(VM* vm, uint8_t* code, size_t size);
-void initVM(VM* vm);
-void swap(VM* vm, int to_SWAP);
-int push(VM* vm, int value);
-int pop(VM* vm);
+void exec(VM *vm, uint8_t *code, size_t size);
+void initVM(VM *vm);
+void swap(VM *vm, int to_SWAP);
+int push(VM *vm, int value);
+int pop(VM *vm);

@@ -1,0 +1,7 @@
+BasedOnStyle: LLVM
+# IndentWidth: 2
+# PointerAlignment: Left
+# AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+# BreakBeforeBraces: Custom
+# BraceWrapping:
+#   BeforeElse: true
