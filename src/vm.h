@@ -45,9 +45,12 @@
 #define DUP 0x0E
 #define SWAP 0x0F
 #define END 0x10
+#define NUM_OPCODES 0x11
 
 // define global variables
 extern bool debug;
+extern const char *OPCODES[NUM_OPCODES];
+extern const uint8_t OPCODE_ARGS[NUM_OPCODES];
 
 // define any structs
 typedef struct {

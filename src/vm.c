@@ -22,6 +22,15 @@
 #include "vm.h"
 #include <string.h>
 
+const char *OPCODES[NUM_OPCODES] = {
+    "PUSH",   "PUSHP",    "POP", "ADD",  "SUB", "MUL",
+    "DIV",    "JMP",      "JNE", "JE",   "JG",  "DPRINT",
+    "SPRINT", "DPRINTST", "DUP", "SWAP", "END",
+};
+const uint8_t OPCODE_ARGS[NUM_OPCODES] = {
+    1, 2, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 0, 0, 1,
+};
+
 void initVM(VM *vm) {
   vm->sp = 0;
   memset(vm->stack, 0, sizeof(vm->stack));

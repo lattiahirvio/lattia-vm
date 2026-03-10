@@ -95,10 +95,25 @@ char *readFileToStr(const char *filepath) {
 }
 
 // convenience function
-bool wsat(char **code) { return isspace((unsigned char)**code); }
+bool wsat(const char **code) { return isspace((unsigned char)**code); }
+
+// if str's first whole token matches the specified token, returns the length of
+// the specified token. else returns 0.
+//
+// assumes both str and prefix are null-terminated
+int firstTokenMatches(const char *str, const char *token) {
+  size_t i = 0;
+  while (token[i] && str[i] == token[i])
+    i++;
+  if (token[i])
+    return 0;
+  if (str[i] && !isspace((unsigned char)str[i]))
+    return 0;
+  return i;
+}
 
 // skips whitespace and comments
-void parseWhitespace(char **code) {
+void parseWhitespace(const char **code) {
   while (true) {
     if (wsat(code)) {
       *code += 1;
@@ -113,7 +128,7 @@ void parseWhitespace(char **code) {
 }
 
 // parses a hex number until whitespace (assuming 0x is already skipped)
-int32_t parseHex(char **code) {
+int32_t parseHex(const char **code) {
   int out = 0;
   while (!wsat(code)) {
     char c = **code;
@@ -131,7 +146,7 @@ int32_t parseHex(char **code) {
 }
 
 // parses a decimal number until whitespace
-int32_t parseDec(char **code) {
+int32_t parseDec(const char **code) {
   int out = 0;
   while (!wsat(code)) {
     char c = **code;
@@ -143,7 +158,7 @@ int32_t parseDec(char **code) {
 }
 
 // parses either a dec number or hex number if it starts with 0x
-int32_t parseNumber(char **code) {
+int32_t parseNumber(const char **code) {
   int sign = 1;
   if (**code == '-') {
     (*code)++;
@@ -157,13 +172,13 @@ int32_t parseNumber(char **code) {
   }
 }
 
-char *parseString(char **code) {
+char *parseString(const char **code) {
   if (debug)
     printf("Parsing String!\n");
   assert(**code == '"', "Error: Expected string literal somewhere.");
   (*code)++;
   const size_t MAX_SIZE = 1024;
-  char *limit = *code + MAX_SIZE;
+  const char *limit = *code + MAX_SIZE;
   char *str = malloc(MAX_SIZE);
   char *next = str;
   while (**code && **code != '"' && *code < limit) {
@@ -213,7 +228,7 @@ char *parseString(char **code) {
   return str;
 }
 
-void parseData(VM *vm, char **code) {
+void parseData(VM *vm, const char **code) {
   if (strncmp(*code, ".data:", 6) != 0) {
     if (debug)
       printf("No .data section found.\n");
@@ -225,18 +240,7 @@ void parseData(VM *vm, char **code) {
 
   while (true) {
     parseWhitespace(code);
-    if (strncmp(*code, ".int", 4) == 0) {
-      if (debug)
-        printf("Found Int! Adding to vm!\n");
-      *code += 4;
-      parseWhitespace(code);
-      int location = parseNumber(code);
-      parseWhitespace(code);
-      int32_t value = parseNumber(code);
-      vm->pool[location] = (const_t){location, 1, .Ivalue = value};
-      if (debug)
-        printf("Int at %d was %d\n", location, value);
-    } else if (strncmp(*code, ".string", 7) == 0) {
+    if (firstTokenMatches(*code, ".string")) {
       if (debug)
         printf("Found String! Adding to vm!\n");
       *code += 7;
@@ -247,6 +251,17 @@ void parseData(VM *vm, char **code) {
       vm->pool[location] = (const_t){location, 0, .Svalue = value};
       if (debug)
         printf("String at %d was \"%s\"\n", location, value);
+    } else if (firstTokenMatches(*code, ".int")) {
+      if (debug)
+        printf("Found Int! Adding to vm!\n");
+      *code += 4;
+      parseWhitespace(code);
+      int location = parseNumber(code);
+      parseWhitespace(code);
+      int32_t value = parseNumber(code);
+      vm->pool[location] = (const_t){location, 1, .Ivalue = value};
+      if (debug)
+        printf("Int at %d was %d\n", location, value);
     } else {
       if (debug)
         printf("End of .data section...\n");
@@ -255,79 +270,84 @@ void parseData(VM *vm, char **code) {
   }
 }
 
+bool parseOperation(uint8_t **bytecodeCursor, const char **code) {
+  // identify opcode
+  int opcode = -1;
+  for (int i = 0; i < NUM_OPCODES; i++) {
+    int matchLength = firstTokenMatches(*code, OPCODES[i]);
+    if (matchLength) {
+      if (debug)
+        printf("Found Opcode! %d: %s\n", i, OPCODES[i]);
+      opcode = i;
+      *code += matchLength;
+      break;
+    }
+  }
+  if (opcode == -1) {
+    if (debug)
+      printf("End of .code section...\n");
+    return false;
+  }
+
+  **bytecodeCursor = opcode;
+  (*bytecodeCursor)++;
+  int numArgs = OPCODE_ARGS[opcode];
+  if (debug)
+    printf("Parsing %d arguments...\n", numArgs);
+  for (int i = 0; i < numArgs; i++) {
+    parseWhitespace(code);
+    **bytecodeCursor = parseNumber(code);
+    if (debug)
+      printf("%d [0x%X]\n", **bytecodeCursor, **bytecodeCursor);
+    (*bytecodeCursor)++;
+  }
+  return true;
+}
+
+void parseCode(uint8_t **bytecodeCursor, const char **code) {
+  if (strncmp(*code, ".code:", 6) != 0) {
+    if (debug)
+      printf("No .code section found.\n");
+    return;
+  }
+  *code += 6;
+  if (debug)
+    printf("Found .code section!\n");
+
+  do
+    parseWhitespace(code);
+  while (parseOperation(bytecodeCursor, code));
+}
+
 void testString() {
-  char *code = "\"Hello, world!\\r\\n\\t\\0 \"";
-  char *s = parseString(&code);
+  const char *code = "\"Hello, world!\\r\\n\\t\\0 \"";
+  const char *s = parseString(&code);
   printf("STRING: %s", s);
+}
+
+void testToken() {
+  const char *code = "PUSHP";
+  assert(!firstTokenMatches(code, "PUSH"), "");
+  assert(firstTokenMatches(code, "PUSHP"), "");
+  printf("PASSED: Test Token\n");
 }
 
 // what do you think this function does
 void test() {
+  testToken();
+
   VM vm;
   initVM(&vm);
 
-  char *code = readFileToStr("bytecode/showcase.lvmasm");
+  const char *code = readFileToStr("bytecode/showcase.lvmasm");
+  uint8_t *bytecode = malloc(strlen(code));
   parseWhitespace(&code);
   parseData(&vm, &code);
+  parseWhitespace(&code);
+  parseCode(&bytecode, &code);
 }
 
-uint8_t *parseStrToBytecode(VM *vm, char *code, int codeSize) {
+uint8_t *parseStrToBytecode(VM *vm, const char *code, int codeSize) {
   error("TODO: Parse and compile LVMASM to Bytecode");
   return NULL;
-}
-
-int getOpcodeFromChar(const char *opcode) {
-  if (strcmp("PUSH", opcode) == 0) {
-    return PUSH;
-  }
-  if (strcmp("PUSHP", opcode) == 0) {
-    return PUSHP;
-  }
-  if (strcmp("POP", opcode) == 0) {
-    return POP;
-  }
-  if (strcmp("ADD", opcode) == 0) {
-    return ADD;
-  }
-  if (strcmp("SUB", opcode) == 0) {
-    return SUB;
-  }
-  if (strcmp("MUL", opcode) == 0) {
-    return MUL;
-  }
-  if (strcmp("DIV", opcode) == 0) {
-    return DIV;
-  }
-  if (strcmp("JMP", opcode) == 0) {
-    return JMP;
-  }
-  if (strcmp("JNE", opcode) == 0) {
-    return JNE;
-  }
-  if (strcmp("JE", opcode) == 0) {
-    return JE;
-  }
-  if (strcmp("JG", opcode) == 0) {
-    return JG;
-  }
-  if (strcmp("DPRINT", opcode) == 0) {
-    return DPRINT;
-  }
-  if (strcmp("SPRINT", opcode) == 0) {
-    return SPRINT;
-  }
-  if (strcmp("DPRINTST", opcode) == 0) {
-    return DPRINTST;
-  }
-  if (strcmp("DUP", opcode) == 0) {
-    return DUP;
-  }
-  if (strcmp("SWAP", opcode) == 0) {
-    return SWAP;
-  }
-  if (strcmp("END", opcode) == 0) {
-    return END;
-  }
-  // printf("String is not a valid opcode identifier.\n");
-  return -1;
 }
