@@ -87,8 +87,6 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
   }
-  test();
-  return 0;
 
   if (file_path) {
     lvasm = readFileToStr(file_path);
@@ -105,7 +103,7 @@ int main(int argc, char *argv[]) {
 
   uint8_t *bytecode;
   if (lvasm) {
-    bytecode = parseStrToBytecode(&vm, lvasm, strlen(lvasm));
+    bytecode = parseStrToBytecode(&vm, lvasm);
     if (debug)
       printf("Size of code is %d\n", vm.codeSize);
 

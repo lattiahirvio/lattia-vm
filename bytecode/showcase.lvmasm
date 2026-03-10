@@ -18,6 +18,7 @@
 
     // Add numbers and print result
     SPRINT 0x00 0x01        // Print "Adding numbers!"
+    PUSH 0x07                 // Push 7 (decimal)
     ADD                       // Add top two numbers on stack
     DPRINTST                  // Print current stack (result of ADD)
 
@@ -45,7 +46,7 @@
     // Conditional jump example
     PUSH 0x01                // Push 1 (true condition)
     PUSH 0x01                // Push 1
-    JE 0x32            // Jump to offset 0x11 if equal
+    JE 0x33            // Jump to offset 0x11 if equal
     SPRINT 0x00 0x07        // Print "It jumped!" (skipped if jumped)
 
     // End the program

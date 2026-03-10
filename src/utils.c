@@ -319,6 +319,32 @@ void parseCode(uint8_t **bytecodeCursor, const char **code) {
   while (parseOperation(bytecodeCursor, code));
 }
 
+uint8_t *parseStrToBytecode(VM *vm, const char *code) {
+  uint8_t *bytecode = malloc(strlen(code));
+  parseWhitespace(&code);
+  parseData(vm, &code);
+  parseWhitespace(&code);
+  uint8_t *cursor = bytecode;
+  parseCode(&cursor, &code);
+  vm->codeSize = cursor - bytecode;
+  if (debug) {
+    printf("PRINTING BYTECODE:\n    ");
+    for (int i = 0; i < 16; i++) {
+      printf("%2X ", i);
+    }
+    for (int i = 0; i < vm->codeSize; i++) {
+      if (i % 16 == 0) {
+        printf("\n%02X: ", i);
+      }
+      printf("%02X ", bytecode[i]);
+    }
+    printf("\n");
+  }
+  return bytecode;
+}
+
+// === TESTS ===
+
 void testString() {
   const char *code = "\"Hello, world!\\r\\n\\t\\0 \"";
   const char *s = parseString(&code);
@@ -332,22 +358,11 @@ void testToken() {
   printf("PASSED: Test Token\n");
 }
 
-// what do you think this function does
 void test() {
   testToken();
 
+  const char *code = readFileToStr("bytecode/showcase.lvmasm");
   VM vm;
   initVM(&vm);
-
-  const char *code = readFileToStr("bytecode/showcase.lvmasm");
-  uint8_t *bytecode = malloc(strlen(code));
-  parseWhitespace(&code);
-  parseData(&vm, &code);
-  parseWhitespace(&code);
-  parseCode(&bytecode, &code);
-}
-
-uint8_t *parseStrToBytecode(VM *vm, const char *code, int codeSize) {
-  error("TODO: Parse and compile LVMASM to Bytecode");
-  return NULL;
+  parseStrToBytecode(&vm, code);
 }

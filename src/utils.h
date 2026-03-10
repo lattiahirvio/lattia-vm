@@ -27,5 +27,5 @@
 #include <strings.h>
 
 char *readFileToStr(const char *filepath);
-uint8_t *parseStrToBytecode(VM *vm, const char *code, int codeSize);
+uint8_t *parseStrToBytecode(VM *vm, const char *code);
 int getOpcodeFromChar(const char *opcode);
