@@ -32,27 +32,36 @@
 #include "utils.h"
 #include "vm.h"
 
-// called like printf - prints to stderr then immediately exits the program
-void error(const char *format, ...) {
-  // i hate varargs
-  va_list args;
-  va_start(args, format);
-  fprintf(stderr, format, args);
-  va_end(args);
+const char *start = NULL;
 
-  exit(EXIT_FAILURE);
+#define ASSERT(cond, code, ...)                                                \
+  if (!(cond)) {                                                               \
+    fprintf(stderr, "ERROR: ");                                                \
+    fprintf(stderr, __VA_ARGS__);                                              \
+    printContext(code);                                                        \
+    exit(EXIT_FAILURE);                                                        \
+  }
+
+const int ERROR_CONTEXT_LENGTH = 16;
+
+char *context(const char *str) {
+  char *buf = malloc(ERROR_CONTEXT_LENGTH + 1);
+  strncpy(buf, str, ERROR_CONTEXT_LENGTH);
+  buf[ERROR_CONTEXT_LENGTH] = '\0';
+  return buf;
 }
 
-// if (!condition) error(...)
-void assert(bool condition, const char *format, ...) {
-  if (condition)
-    return;
-
-  // i hate varargs
-  va_list args;
-  va_start(args, format);
-  error(format, args);
-  va_end(args);
+void printContext(const char *code) {
+  int line = 1;
+  int col = 1;
+  for (char *c = start; c < code; c++) {
+    col++;
+    if (*c == '\n') {
+      line++;
+      col = 0;
+    }
+  }
+  fprintf(stderr, "\n> at line %d col %d: '%s'...", line, col, context(code));
 }
 
 // reads a whole file to a char*
@@ -137,7 +146,7 @@ int32_t parseHex(const char **code) {
       out += c - '0';
     } else {
       c = toupper(c);
-      assert(c >= 'A' && c <= 'F', "Error: Invalid hex literal somewhere.");
+      ASSERT(c >= 'A' && c <= 'F', *code, "Invalid hex literal");
       out += c - 'A' + 10;
     }
     *code += 1;
@@ -150,7 +159,7 @@ int32_t parseDec(const char **code) {
   int out = 0;
   while (!wsat(code)) {
     char c = **code;
-    assert(c >= '0' && c <= '9', "Error: Invalid decimal literal somewhere.");
+    ASSERT(c >= '0' && c <= '9', *code, "Invalid decimal literal");
     out = out * 10 + c - '0';
     *code += 1;
   }
@@ -176,7 +185,7 @@ int32_t parseNumber(const char **code) {
 char *parseString(const char **code) {
   if (debug)
     printf("Parsing String!\n");
-  assert(**code == '"', "Error: Expected string literal somewhere.");
+  ASSERT(**code == '"', *code, "Expected string literal");
   (*code)++;
   const size_t MAX_SIZE = 1024;
   const char *limit = *code + MAX_SIZE;
@@ -213,7 +222,8 @@ char *parseString(const char **code) {
       break;
     default:
       if (debug)
-        printf("Warning: Invalid escape character found somewhere: %c", **code);
+        printf("Warning: Invalid escape character found: '%c' at: '%s'", **code,
+               context(*code));
       *next = **code;
     }
     if (debug)
@@ -224,17 +234,17 @@ char *parseString(const char **code) {
   *next = '\0';
   next++;
   str = realloc(str, next - str);
-  assert(**code == '"', "Error: Unterminated string literal.");
+  ASSERT(**code == '"', *code, "Unterminated string literal");
   (*code)++;
   return str;
 }
 
 // parses the ".data:" section until a non-data-related token is found
-void parseData(VM *vm, const char **code) {
+bool parseData(VM *vm, const char **code) {
   if (strncmp(*code, ".data:", 6) != 0) {
     if (debug)
       printf("No .data section found.\n");
-    return;
+    return false;
   }
   *code += 6;
   if (debug)
@@ -267,7 +277,7 @@ void parseData(VM *vm, const char **code) {
     } else {
       if (debug)
         printf("End of .data section...\n");
-      return;
+      return true;
     }
   }
 }
@@ -308,11 +318,11 @@ bool parseOperation(uint8_t **bytecodeCursor, const char **code) {
 }
 
 // parses the ".code:" section until either EOF or a syntax error
-void parseCode(uint8_t **bytecodeCursor, const char **code) {
+bool parseCode(uint8_t **bytecodeCursor, const char **code) {
   if (strncmp(*code, ".code:", 6) != 0) {
     if (debug)
       printf("No .code section found.\n");
-    return;
+    return false;
   }
   *code += 6;
   if (debug)
@@ -321,19 +331,28 @@ void parseCode(uint8_t **bytecodeCursor, const char **code) {
   do
     parseWhitespace(code);
   while (parseOperation(bytecodeCursor, code));
+
+  return true;
 }
 
 uint8_t *parseStrToBytecode(VM *vm, const char *code) {
+  start = code;
+
   uint8_t *bytecode = malloc(strlen(code));
 
   parseWhitespace(&code);
   parseData(vm, &code);
   parseWhitespace(&code);
   uint8_t *cursor = bytecode;
-  parseCode(&cursor, &code);
+  bool hasCode = parseCode(&cursor, &code);
+  ASSERT(hasCode, code, "Expected '.code' header")
   parseWhitespace(&code);
+  // parseCode returns when it finds an invalid opcode.
+  // like parseData, they both assume that something might come after.
+  // but nothing should come after code,
+  // so it must have hit an invalid instruction.
+  ASSERT(*code == '\0', code, "Invalid Instruction");
 
-  assert(*code == '\0', "Error: Syntax error somewhere in '.code' section.");
   vm->codeSize = cursor - bytecode;
 
   if (debug) {
@@ -350,6 +369,8 @@ uint8_t *parseStrToBytecode(VM *vm, const char *code) {
     printf("\n");
   }
 
+  start = NULL;
+
   return bytecode;
 }
 
@@ -363,8 +384,8 @@ void testString() {
 
 void testToken() {
   const char *code = "PUSHP";
-  assert(!firstTokenMatches(code, "PUSH"), "");
-  assert(firstTokenMatches(code, "PUSHP"), "");
+  ASSERT(!firstTokenMatches(code, "PUSH"), code, "Assert failed");
+  ASSERT(firstTokenMatches(code, "PUSHP"), code, "Assert failed");
   printf("PASSED: Test Token\n");
 }
 

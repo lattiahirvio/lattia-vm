@@ -1,7 +1,7 @@
 // Minified:
 // .code: PUSH 253 PUSH 0 SUB DUP PUSH 1 ADD DUP PUSH 0 JNE 5 PUSH 78 PUSH 10 MUL PUSH 3 ADD DUP DUP DPRINTST DPRINTST PUSH 0 PUSH 0 END 
 
- .code:
+.code:
     PUSH 253 PUSH 0 SUB     // PUSH -253
     // loop: address pc=5 {
         DUP PUSH 1 ADD      // top++;
